@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>my-react – counter example</title>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="module">
+      import myReact, { createElement, render } from "../src/my-react.js"
+
+      // Alias shorter name like React.createElement -> h
+      const h = createElement
+
+      function App() {
+        return h(
+          "div",
+          { style: { fontFamily: "sans-serif", padding: "16px" } },
+          h("h1", null, "Hello from my-react"),
+          h(
+            "button",
+            {
+              // Nothing will really change yet (no state),
+              // but we can show a console log.
+              onClick: () => console.log("Button clicked!"),
+            },
+            "Click me"
+          )
+        )
+      }
+
+      const root = document.getElementById("root")
+      render(h(App, null), root)
+    </script>
+  </body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>my-react – hooks example</title>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="module">
+      import myReact, {
+        createElement as h,
+        render,
+        useState,
+        useEffect,
+        useRef,
+        useMemo,
+        useCallback,
+      } from "../src/my-react-v2.js"
+
+      function HeavyComputation({ value }) {
+        const computed = useMemo(() => {
+          // Fake heavy computation
+          let acc = 0
+          for (let i = 0; i < 500000; i++) {
+            acc += (value * i) % 7
+          }
+          return acc
+        }, [value])
+
+        return h(
+          "p",
+          null,
+          "Heavy computed value for ",
+          String(value),
+          ": ",
+          String(computed)
+        )
+      }
+
+      function App() {
+        const [count, setCount] = useState(0)
+        const [text, setText] = useState("")
+        const renderCountRef = useRef(0)
+
+        renderCountRef.current += 1
+
+        const increment = useCallback(() => {
+          setCount((c) => c + 1)
+        }, [])
+
+        useEffect(() => {
+          console.log("Count changed:", count)
+          return () => {
+            console.log("Cleanup for count:", count)
+          }
+        }, [count])
+
+        return h(
+          "div",
+          { style: { fontFamily: "sans-serif", padding: "16px" } },
+          h("h1", null, "my-react hooks demo"),
+          h(
+            "button",
+            { onClick: increment, style: { marginRight: "8px" } },
+            "Count: ",
+            String(count)
+          ),
+          h(
+            "input",
+            {
+              value: text,
+              oninput: (e) => setText(e.target.value),
+              placeholder: "Type something",
+            }
+          ),
+          h(
+            "p",
+            null,
+            "Render count (tracked via useRef): ",
+            String(renderCountRef.current)
+          ),
+          h(HeavyComputation, { value: count })
+        )
+      }
+
+      const root = document.getElementById("root")
+      render(h(App, null), root)
+    </script>
+  </body>
+</html>

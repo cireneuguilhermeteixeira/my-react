@@ -5,9 +5,29 @@
 // -------------------------------------------------
 // Element creation (virtual element tree)
 // -------------------------------------------------
+const TEXT_ELEMENT = "TEXT_ELEMENT"
+
+function createTextElement(text) {
+  return {
+    type: TEXT_ELEMENT,
+    props: {
+      nodeValue: String(text),
+      children: [],
+    },
+  }
+}
+
 export function createElement(type, props, ...children) {
-  const normalizedChildren =
-    children.length === 1 ? children[0] : children
+  // Always store children as an array of elements (including text elements)
+  const flatChildren = children.flat ? children.flat() : children
+
+  const normalizedChildren = flatChildren
+    .filter((child) => child !== null && child !== undefined && child !== false)
+    .map((child) =>
+      typeof child === "object"
+        ? child
+        : createTextElement(child)
+    )
 
   return {
     type,
@@ -122,36 +142,31 @@ function updateFunctionComponent(fiber) {
 }
 
 // -------------------------------------------------
-// Host components (div, span, button...)
+// Host components (div, span, button...) and text
 // -------------------------------------------------
 function updateHostComponent(fiber) {
   if (!fiber.dom) {
     fiber.dom = createDom(fiber)
   }
 
-  const children = fiber.props && fiber.props.children
-  const normalizedChildren = Array.isArray(children)
-    ? children
-    : children != null
-      ? [children]
-      : []
-
-  reconcileChildren(fiber, normalizedChildren)
+  const elements = (fiber.props && fiber.props.children) || []
+  reconcileChildren(fiber, elements)
 }
 
 // -------------------------------------------------
-// Create DOM node from a host fiber
+// Create DOM node from a host or text fiber
 // -------------------------------------------------
 function createDom(fiber) {
   if (fiber.type === "ROOT") {
     return fiber.dom
   }
 
-  // Text nodes are handled via createElement as primitive children
+  if (fiber.type === TEXT_ELEMENT) {
+    return document.createTextNode(fiber.props.nodeValue || "")
+  }
+
   const dom = document.createElement(fiber.type)
-
   updateDom(dom, {}, fiber.props || {})
-
   return dom
 }
 
@@ -160,9 +175,19 @@ function createDom(fiber) {
 // -------------------------------------------------
 const isEvent = (key) => key.startsWith("on")
 const isProperty = (key) =>
-  key !== "children" && !isEvent(key)
+  key !== "children" && key !== "nodeValue" && !isEvent(key)
 
 function updateDom(dom, prevProps, nextProps) {
+  // Text node: just update nodeValue
+  if (dom.nodeType === Node.TEXT_NODE) {
+    const prevText = prevProps.nodeValue
+    const nextText = nextProps.nodeValue
+    if (prevText !== nextText) {
+      dom.nodeValue = nextText == null ? "" : String(nextText)
+    }
+    return
+  }
+
   // Remove old or changed event listeners
   Object.keys(prevProps)
     .filter(isEvent)
@@ -361,8 +386,6 @@ export function useState(initial) {
 
   const setState = (action) => {
     hook.queue.push(action)
-
-    // Schedule re-render of the root
     _rerenderRoot()
   }
 
@@ -372,7 +395,6 @@ export function useState(initial) {
   return [hook.state, setState]
 }
 
-// useRef: persistent object between renders
 export function useRef(initialValue) {
   const oldHook =
     wipFiber &&
@@ -390,7 +412,6 @@ export function useRef(initialValue) {
   return hook
 }
 
-// useMemo: memoize computed value
 export function useMemo(factory, deps) {
   const oldHook =
     wipFiber &&
@@ -424,12 +445,10 @@ export function useMemo(factory, deps) {
   return hook.value
 }
 
-// useCallback: memoize function reference
 export function useCallback(callback, deps) {
   return useMemo(() => callback, deps)
 }
 
-// useEffect: run side-effects after commit
 export function useEffect(effect, deps) {
   const oldHook =
     wipFiber &&
@@ -454,7 +473,6 @@ export function useEffect(effect, deps) {
   }
 
   if (hasChanged) {
-    // Schedule this effect to run after commit
     pendingEffects.push(hook)
   }
 
@@ -462,7 +480,6 @@ export function useEffect(effect, deps) {
   hookIndex++
 }
 
-// Run all scheduled effects after commit
 function flushEffects() {
   pendingEffects.forEach((hook) => {
     if (typeof hook.cleanup === "function") {

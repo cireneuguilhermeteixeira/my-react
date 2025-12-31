@@ -370,18 +370,22 @@ export function useState(initial) {
     wipFiber.alternate.hooks &&
     wipFiber.alternate.hooks[hookIndex]
 
-  const hook = {
-    state: oldHook ? oldHook.state : initial,
+  // Reuse the same hook object when it already exists
+  const hook = oldHook || {
+    state: initial,
     queue: [],
   }
 
-  if (oldHook && oldHook.queue.length > 0) {
-    oldHook.queue.forEach((action) => {
+  // Apply all pending updates
+  if (hook.queue.length > 0) {
+    hook.queue.forEach((action) => {
       hook.state =
         typeof action === "function"
           ? action(hook.state)
           : action
     })
+    // Clear queue after processing
+    hook.queue = []
   }
 
   const setState = (action) => {

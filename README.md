@@ -278,4 +278,3 @@ function App() {
 - No portals
 - No concurrent scheduling
 - DOM updates are simplified
-

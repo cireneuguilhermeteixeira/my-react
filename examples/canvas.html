@@ -1,0 +1,29 @@
+<canvas id="scene" width="400" height="300"></canvas>
+
+<script type="module">
+  import {
+    createElement,
+    render,
+    useState,
+    useEffect,
+  } from "../src/my-react-canvas.js"
+
+  function App() {
+    const [x, setX] = useState(10)
+
+    useEffect(() => {
+      const id = setInterval(() => {
+        setX((prev) => (prev + 5) % 400)
+      }, 100)
+      return () => clearInterval(id)
+    }, [])
+
+    return createElement(
+      "rect",
+      { x, y: 50, width: 50, height: 50, fill: "red" }
+    )
+  }
+
+  const canvas = document.getElementById("scene")
+  render(createElement(App, null), canvas)
+</script>

@@ -4,10 +4,7 @@ import {
   createRenderer,
 } from "./my-react-core.js"
 
-// ------------------------------------------
-// Canvas-specific host config
-// (2D for now, easy to adapt to WebGL later)
-// ------------------------------------------
+
 const canvasHostConfig = {
   rootType: "ROOT_CANVAS",
 
@@ -77,12 +74,20 @@ const canvasHostConfig = {
         ctx.fillStyle = fill
         ctx.fillRect(x, y, width, height)
       }
+      else if (node.type === "circle") {
+        const {
+            x = 0,
+            y = 0,
+            radius = 10,
+            fill = "black",
+        } = node.props || {};
 
-      // You could add other node types here:
-      // - circle
-      // - line
-      // - image
-      // - etc.
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+      
 
       if (Array.isArray(node.children)) {
         node.children.forEach(drawNode)

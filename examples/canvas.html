@@ -9,18 +9,35 @@
   } from "../src/my-react-canvas.js"
 
   function App() {
-    const [x, setX] = useState(10)
+    const [xSquare, setXSquare] = useState(10)
+    const [xCircle, setXCircle] = useState(30)
+
 
     useEffect(() => {
       const id = setInterval(() => {
-        setX((prev) => (prev + 5) % 400)
+        setXSquare((prev) => (prev + 5) % 400)
+        setXCircle((prev) => (prev + 15) % 400)
+
       }, 100)
       return () => clearInterval(id)
     }, [])
 
-    return createElement(
-      "rect",
-      { x, y: 50, width: 50, height: 50, fill: "red" }
+   return createElement(
+    "scene",
+    null,
+    createElement("rect", {
+        x: xSquare,
+        y: 50,
+        width: 50,
+        height: 50,
+        fill: "red",
+    }),
+    createElement("circle", {
+        x: xCircle,
+        y: 150,
+        radius: 25,
+        fill: "green",
+    })
     )
   }
 
